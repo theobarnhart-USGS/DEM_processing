@@ -1,0 +1,9 @@
+*.nc
+data/*
+figures/*
+*.png
+*.pdf
+*.csv
+*.tif
+*.tiff
+.ipynb_checkpoints/*
