@@ -7,3 +7,6 @@ figures/*
 *.tif
 *.tiff
 .ipynb_checkpoints/*
+*.out
+*.qgs~
+*.aux.xml
