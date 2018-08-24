@@ -38,9 +38,11 @@ gauges = gauges.loc[gauges.NHDPlusReg == reg] # subset the gauge list
 
 # create list of gauge locations
 
-# infill the missing snapped locations with NWIS locations
-gauges.loc[np.isnan(gauges.Lat_snap) == 1,'Lat_snap'] = gauges.loc[np.isnan(gauges.Lat_snap) == 1].Lat_nwis
-gauges.loc[np.isnan(gauges.Long_snap) == 1,'Long_snap'] = gauges.loc[np.isnan(gauges.Long_snap) == 1].Long_nwis
+# infill the missing snapped locations with NWIS locations, no longer needed after talk w/ Kathy Chase.
+#gauges.loc[np.isnan(gauges.Lat_snap) == 1,'Lat_snap'] = gauges.loc[np.isnan(gauges.Lat_snap) == 1].Lat_nwis
+#gauges.loc[np.isnan(gauges.Long_snap) == 1,'Long_snap'] = gauges.loc[np.isnan(gauges.Long_snap) == 1].Long_nwis
+
+gauges.dropna(inplace=True) # just drop the rows containing NA values
 
 lons = gauges.Long_snap.values
 lats = gauges.Lat_snap.values
@@ -71,15 +73,31 @@ r_water_outlet = Module('r.water.outlet')
 r_to_vect = Module('r.to.vect')
 v_out_ogr = Module('v.out.ogr')
 g_region = Module('g.region') # command to set processing region extent and resolution
+v_db_addcol = Module('v.db.addcolumn')
+v_to_db = Module('v.to.db')
 
 r_external(input=drainDirPath,output='dir', o = True, overwrite = True) # bring in the drainage direction raster
 g_region(raster = 'dir', res = 30) # set region resolution and extent
 
 for ID,x,y in zip(gaugeID,xs,ys):
     print('Starting Gauge No. %s in Region %s.'%(ID,reg))
-    outfl = os.path.join(workspace,'gauges','region_%s_gageNo_%s_watershed_NHDplusV21.shp'%(reg,ID)) # format output string
-    r_water_outlet(input = 'dir', output = 'watershed', coordinates =(x,y), overwrite=True) # delineate watershed
-    r_to_vect(input = 'watershed', output = 'boundary', type = 'area', overwrite=True) # convert raster to vector
-    v_out_ogr(input = 'boundary', type = 'area', output = outfl, format = 'ESRI_Shapefile') # export the watershed boundary
+    outfl = os.path.join(workspace,'gauges','region_%s_gageNo_%s_watershed_NHDplusV2_1.shp'%(reg,ID)) # format output string
 
-    print('Gauge No. %s in Region %s complete.'%(ID,reg))
+    if os.path.isfile(outfl):
+        print('Gauge No. %s in Region %s already complete.'%(ID,reg))
+        continue
+
+    else:
+        r_water_outlet(input = 'dir', output = 'watershed', coordinates =(x,y), overwrite=True) # delineate watershed
+        r_to_vect(input = 'watershed', output = 'boundary', type = 'area', overwrite=True) # convert raster to vector
+
+        # compute area of watershed
+        v_db_addcol(map='boundary', columns='area_sqkm double precision')
+        v_to_db(map='boundary', option='area', columns='area_sqkm', units='kilometers')
+
+        v_out_ogr(e = True, input = 'boundary', type = 'area', output = outfl, overwrite=True, format = 'ESRI_Shapefile') # export the watershed boundary to a temporary file
+        # define projection later...
+        #cmd = 'ogr2ogr -a_srs \'+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs\' %s ./data/gauges/tmp_reg%s.shp'%(outfl,reg) #ogr command to define projection
+        #subprocess.call(cmd,shell=True)
+
+        print('Gauge No. %s in Region %s complete.'%(ID,reg))

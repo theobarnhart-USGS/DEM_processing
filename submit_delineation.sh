@@ -1,9 +1,18 @@
+#!/bin/bash
+# Script to move files and then run the aggregation script
+# Theodore Barnhart | tbarnhart@usgs.gov
+
+#SBATCH --job-name=delineat_catchments # name that you chose
+#SBATCH -n 1            # number of cores needed
+#SBATCH -p normal                         # the partition you want to use, for this case prod is best
+#SBATCH --account=wymtwsc        # your account
+#SBATCH --time=86:00:00           # Overestimated time
+#SBATCH --mail-type=ALL         # Send email on all events
+#SBATCH --mail-user=tbarnhart@usgs.gov
+#SBATCH  -o %j.log                    # Sets output log file to %j ( will be the jobId returned by sbatch)
+#SBATCH --mem=15000
+
 source activate py27 # load correct python environment
 module load gis/grass-7.4-spack # load GRASS
 
-mkdir ./SStemp/reg${1} # create scratch environment
-mkdir ./SStemp/reg${1}/PERMANENT # make for GRASS
-
-grass74 -c ./data/NHDplusV21_facfdr/region_${1}_fdr_grass.tiff ./SStemp/reg${1} --exec python2 ./extract_watersheds.py ${1}
-
-rm -r ./SStemp/reg${1}
+grass74 ./grass/reg${1}/PERMANENT --exec python2 ./extract_watersheds.py ${1} # open grass and run the program
