@@ -14,3 +14,5 @@ grassScratch/*
 Nebraska/*
 NHDplusV21/*
 NE_new/*
+*.log
+grass/*
