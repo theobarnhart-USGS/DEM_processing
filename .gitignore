@@ -10,3 +10,7 @@ figures/*
 *.out
 *.qgs~
 *.aux.xml
+grassScratch/*
+Nebraska/*
+NHDplusV21/*
+NE_new/*
