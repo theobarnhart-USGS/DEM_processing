@@ -6,10 +6,9 @@
 # Script must be run via grass74 -c <inpath>/huc_<huc>.tiff ./ --exec lidar2flowline.sh <inpath> <huc> <thresh> <outdir>
 #
 # inputs:
-# $1 <inpath> - input directory
-# $2 <huc> - huc12 ID, can really be any hucID as long as it exists
-# $3 <thresh> - cell threshold above which to create streams
-# $4 <outdir> - output directory to print flowline
+# $1 <huc> - huc12 ID, can really be any hucID as long as it exists
+# $2 <thresh> - cell threshold above which to create streams
+# $3 <outdir> - output directory to print flowline
 #
 #
 # outputs:
@@ -22,8 +21,11 @@
 # tbarnhart@usgs.gov
 #
 ##########################################################################
+echo $1
+echo $2
+echo $3
 
-r.external i=${1}/huc_${2}.tiff o=huc
-r.watershed elev=huc str=str threshold=$3
+r.external i=./SStemp_${1}/huc_${1}.tiff o=huc
+r.watershed elev=huc str=str threshold=$2
 r.to.vect type=line input=str output=flowline
-v.out.ogr input=flowline output=${4}/huc_${2}.shp format=ESRI_Shapefile --overwrite
+v.out.ogr input=flowline output=${3}/huc_${1}.shp format=ESRI_Shapefile --overwrite
