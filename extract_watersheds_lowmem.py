@@ -110,35 +110,9 @@ for ID,x,y in zip(gaugeID,xs,ys):
         print('Starting Gauge No. %s in Region %s.'%(ID,reg))
         
         # reset region to full extent, reduced resolution
-        g_region(raster='elev')
-        g_region(res=coarseRes)
-
-        r_water_outlet(input = 'dir_coarse', output = 'watershed', coordinates =(x,y), overwrite=True, quiet = True) # delineate watershed at coarse scale, using 
-        if output: print('initial watershed delineation complete.')
-
-        r_buffer(input = 'watershed', output = 'watershed_buff', distances = buffDist, overwrite = True, quiet = True)
-        if output: print('buffering complete')
-
-        r_to_vect(input = 'watershed_buff', output = 'boundary_buff', type = 'area', overwrite=True, quiet = True) # convert raster to vector
-
-        # set region to buffered watershed
-        g_region(vector = 'boundary_buff') # set region extent
-        g_region(res = Res, a = True) # set region resolution
         
-        if output: g_region(p=True)
-        if output: print('region set to finer resolution and extent')
+        cmd = 'sh extract.sh %s %s %s %s %s %s'%(coarseRes,Res,buffDist,outfl,x,y)
 
-        r_water_outlet(input = 'dir', output = 'watershed', coordinates = (x,y), overwrite = True, quiet = True) # re-run watershed computation on smaller region of interest.
-        if output: print('secondary extraction complete')
-        r_to_vect(input = 'watershed', output = 'boundary', type = 'area', overwrite=True, quiet = True) # convert raster to vector
-        if output: print('converted to vector')
-        # compute area of watershed
-        v_db_addcol(map='boundary', columns='area_sqkm double precision', quiet = True)
-        v_to_db(map='boundary', option='area', columns='area_sqkm', units='kilometers', quiet = True)
-        if output: print('area computed')
-        v_out_ogr(e = True, input = 'boundary', type = 'area', output = outfl, overwrite=True, format = 'ESRI_Shapefile', quiet = True) # export 
-
-        g_region(raster='elev')
-        g_region(res=coarseRes,a=True)
+        subprocess.call(cmd, shell=True)
 
         print('Gauge No. %s in Region %s complete.'%(ID,reg))
