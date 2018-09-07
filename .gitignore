@@ -7,3 +7,12 @@ figures/*
 *.tif
 *.tiff
 .ipynb_checkpoints/*
+*.out
+*.qgs~
+*.aux.xml
+grassScratch/*
+Nebraska/*
+NHDplusV21/*
+NE_new/*
+*.log
+grass/*
