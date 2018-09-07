@@ -15,9 +15,12 @@ buffDist=$3
 outfl=$4
 x=$5
 y=$6
+reg=$7
 
 g.region rast=elev
 g.region res=$coarseRes -a
+
+echo $5,$6 > ./data/reg${reg}_pour_pt.txt
 
 r.water.outlet in=dir_coarse out=watershed coord=${x},${y} --overwrite --quiet
 
@@ -25,10 +28,22 @@ r.buffer in=watershed out=watershed_buff dist=$buffDist --overwrite --quiet
 
 r.to.vect in=watershed_buff out=boundary_buff type=area --overwrite --quiet
 
+# reset region boundary
 g.region vect=boundary_buff
 g.region res=$Res -a
 
-r.water.outlet in=dir out=watershed coord=${x},${y} --overwrite --quiet
+# bring in basin pour point
+v.in.ascii in=./data/reg${reg}_pour_pt.txt out=pp format=point sep=comma --overwrite --quiet
+
+r.snap.outlet in=pp out=ppSnap accum=accum radius=2 thresh=500 # snap pour point to accumulation grid
+
+v.out.ascii in=ppSnap out=./data/reg${reg}_pour_pt_snap.txt format=point sep=comma --overwrite --quiet
+
+# read the snapped point from the text file
+while IFS=, read -r x y z
+do
+    r.water.outlet in=dir out=watershed coord=${x},${y} --overwrite --quiet
+done < ./data/reg{reg}_pour_pt_snap.txt
 
 r.to.vect in=watershed out=boundary type=area --overwrite --quiet
 
