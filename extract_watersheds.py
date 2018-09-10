@@ -29,6 +29,9 @@ def fixRegion(df):
     
     if reg[:2] == '03':
         reg = '03'
+
+    if reg[:2] == '10':
+        reg = '10'
         
     return reg
 
@@ -75,9 +78,13 @@ v_out_ogr = Module('v.out.ogr')
 g_region = Module('g.region') # command to set processing region extent and resolution
 v_db_addcol = Module('v.db.addcolumn')
 v_to_db = Module('v.to.db')
+v_in_ascii = Module('v.in.ascii')
+r_snap_outlet = Module('r.snap.outlet')
+v_out_ascii = Module('v.out.ascii')
 
 r_external(input=drainDirPath,output='dir', o = True, overwrite = True) # bring in the drainage direction raster
 g_region(raster = 'dir', res = 30) # set region resolution and extent
+r_external() # link the accumulation raster
 
 for ID,x,y in zip(gaugeID,xs,ys):
     print('Starting Gauge No. %s in Region %s.'%(ID,reg))
@@ -88,14 +95,22 @@ for ID,x,y in zip(gaugeID,xs,ys):
         continue
 
     else:
-        r_water_outlet(input = 'dir', output = 'watershed', coordinates =(x,y), overwrite=True) # delineate watershed
-        r_to_vect(input = 'watershed', output = 'boundary', type = 'area', overwrite=True) # convert raster to vector
+        # export basin pointsm
+
+        # snap point
+
+        # export to txt
+
+        # read txt back in...
+
+        r_water_outlet(input = 'dir', output = 'watershed', coordinates =(x,y), overwrite=True, quiet = True) # delineate watershed
+        r_to_vect(input = 'watershed', output = 'boundary', type = 'area', overwrite=True, quiet = True) # convert raster to vector
 
         # compute area of watershed
-        v_db_addcol(map='boundary', columns='area_sqkm double precision')
-        v_to_db(map='boundary', option='area', columns='area_sqkm', units='kilometers')
+        v_db_addcol(map='boundary', columns='area_sqkm double precision', quiet = True)
+        v_to_db(map='boundary', option='area', columns='area_sqkm', units='kilometers', quiet = True)
 
-        v_out_ogr(e = True, input = 'boundary', type = 'area', output = outfl, overwrite=True, format = 'ESRI_Shapefile') # export the watershed boundary to a temporary file
+        v_out_ogr(e = True, input = 'boundary', type = 'area', output = outfl, overwrite=True, format = 'ESRI_Shapefile', quiet = True) # export the watershed boundary to a temporary file
         # define projection later...
         #cmd = 'ogr2ogr -a_srs \'+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs\' %s ./data/gauges/tmp_reg%s.shp'%(outfl,reg) #ogr command to define projection
         #subprocess.call(cmd,shell=True)
