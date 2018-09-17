@@ -79,13 +79,13 @@ v_out_ogr = Module('v.out.ogr')
 g_region = Module('g.region') # command to set processing region extent and resolution
 v_db_addcol = Module('v.db.addcolumn')
 v_to_db = Module('v.to.db')
-v_in_ascii = Module('v.in.ascii')
-r_snap_outlet = Module('r.snap.outlet')
-v_out_ascii = Module('v.out.ascii')
+#v_in_ascii = Module('v.in.ascii')
+#r_snap_outlet = Module('r.snap.outlet')
+#v_out_ascii = Module('v.out.ascii')
 
 r_external(input=drainDirPath,output='dir', o = True, overwrite = True) # bring in the drainage direction raster
 g_region(raster = 'dir', res = 30) # set region resolution and extent
-r_external() # link the accumulation raster
+#r_external() # link the accumulation raster
 
 for ID,x,y in zip(gauges.Gage_no,gauges.x,gauges.y):
     print('Starting Gauge No. %s in Region %s.'%(ID,reg))
