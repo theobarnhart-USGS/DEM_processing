@@ -15,29 +15,30 @@ reg = sys.argv[1] # extract coommand line argument 1, region to process
 #reg = '16'
 
 workspace = '/home/tbarnhart/projects/DEM_processing/data'
-drainDirPath = os.path.join('./data','NHDplusV21_facfdr','region_%s_fdr_grass.tiff'%(reg))
+drainDirPath = os.path.join(workspace,'NHDplusV21_facfdr','region_%s_fdr_grass.tiff'%(reg))
 
-fl = './data/CATCHMENT_v1.csv' # need to change this
+#fl = './data/CATCHMENT_v1.csv' # need to change this
+fl = os.path.join(workspace,'CATCHMENT_gauges/CATCHMENT_reg_%s_snapped_ID.csv'%reg)
 gauges = pd.read_csv(fl)
 
-gauges.loc[gauges.Lat_snap == -9999,'Lat_snap'] = np.NaN # handle no data values
-gauges.loc[gauges.Long_snap == -9999,'Long_snap'] = np.NaN
+#gauges.loc[gauges.Lat_snap == -9999,'Lat_snap'] = np.NaN # handle no data values
+#gauges.loc[gauges.Long_snap == -9999,'Long_snap'] = np.NaN
 
-def fixRegion(df):
-    '''Fix region 3, which is divided in the original data set for some reason.'''
-    reg = df.NHDPlusReg # get region
-    
-    if reg[:2] == '03':
-        reg = '03'
+#def fixRegion(df):
+#    '''Fix region 3, which is divided in the original data set for some reason.'''
+#    reg = df.NHDPlusReg # get region
+#    
+#    if reg[:2] == '03':
+#        reg = '03'
+#
+#    if reg[:2] == '10':
+#        reg = '10'
+#        
+#    return reg
 
-    if reg[:2] == '10':
-        reg = '10'
-        
-    return reg
+#gauges['NHDPlusReg'] = gauges.apply(fixRegion,axis=1) # fix region 3
 
-gauges['NHDPlusReg'] = gauges.apply(fixRegion,axis=1) # fix region 3
-
-gauges = gauges.loc[gauges.NHDPlusReg == reg] # subset the gauge list
+#gauges = gauges.loc[gauges.NHDPlusReg == reg] # subset the gauge list
 
 # create list of gauge locations
 
@@ -45,28 +46,28 @@ gauges = gauges.loc[gauges.NHDPlusReg == reg] # subset the gauge list
 #gauges.loc[np.isnan(gauges.Lat_snap) == 1,'Lat_snap'] = gauges.loc[np.isnan(gauges.Lat_snap) == 1].Lat_nwis
 #gauges.loc[np.isnan(gauges.Long_snap) == 1,'Long_snap'] = gauges.loc[np.isnan(gauges.Long_snap) == 1].Long_nwis
 
-gauges.dropna(inplace=True) # just drop the rows containing NA values
+#gauges.dropna(inplace=True) # just drop the rows containing NA values
 
-lons = gauges.Long_snap.values
-lats = gauges.Lat_snap.values
-gaugeID = gauges.Gage_no.values
+#lons = gauges.Long_snap.values
+#lats = gauges.Lat_snap.values
+#gaugeID = gauges.Gage_no.values
 
-inProj = '+proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs' # projection of points pulled from shapefile
+#inProj = '+proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs' # projection of points pulled from shapefile
 #outProj = '+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs' # pulled from FDR
 
 # define projections
-inProj = Proj(inProj,preserve_units=True)
+#inProj = Proj(inProj,preserve_units=True)
 #outProj = Proj(outProj)
-outProj = Proj('+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs', preserve_units=True)
+#outProj = Proj('+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=23 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs', preserve_units=True)
 
 # reporject the gauges
-xs = []
-ys = []
+#xs = []
+#ys = []
 
-for lon,lat in zip(lons,lats):
-    x,y = transform(inProj,outProj,lon,lat)
-    xs.append(x)
-    ys.append(y)
+#for lon,lat in zip(lons,lats):
+#    x,y = transform(inProj,outProj,lon,lat)
+#    xs.append(x)
+#    ys.append(y)
 
 # now for the GRASS code
 
@@ -86,7 +87,7 @@ r_external(input=drainDirPath,output='dir', o = True, overwrite = True) # bring 
 g_region(raster = 'dir', res = 30) # set region resolution and extent
 r_external() # link the accumulation raster
 
-for ID,x,y in zip(gaugeID,xs,ys):
+for ID,x,y in zip(gauges.Gage_no,gauges.x,gauges.y):
     print('Starting Gauge No. %s in Region %s.'%(ID,reg))
     outfl = os.path.join(workspace,'gauges','region_%s_gageNo_%s_watershed_NHDplusV2_1.shp'%(reg,ID)) # format output string
 
