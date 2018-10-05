@@ -27,7 +27,7 @@ for inDat in `ls -1 ${inpath}*.tiff`; do # iterate through the source data files
     echo Processing: $filename
     varName="${filename%.*}"
     outDat=${inPath}$varName_${reg}_cpg.tiff
-    grass74 ./grass/reg${reg}/PERMANENT --exec sh ./make_cpg.sh ${inDat} ${reg} ${outDat} # open grass and run the program
+    srun grass74 ./grass/reg${reg}/PERMANENT --exec sh ./make_cpg.sh ${inDat} ${reg} ${outDat} # open grass and run the program
     echo Completed: $filename
 done
 
