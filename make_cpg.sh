@@ -12,7 +12,7 @@ for inDat in `ls -1 ${inpath}*.tiff`; do # iterate through the source data files
     filename=$(basename -- "$inDat") # file without path
     echo Processing: $filename
     varName="${filename%.*}"
-    outDat=${inPath}${varName}_${reg}_cpg.tiff
+    outDat=${inpath}${varName}_${reg}_cpg.tiff
     echo Saving to: $outDat
     r.external in=${inDat} out=param --overwrite --quiet -o # link the parameter grid
     r.mapcalc "param_fill = if(isnull(param),0,param)" --overwrite # fill nulls to zero before accumulating the parameter surface 
