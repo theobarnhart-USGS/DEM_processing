@@ -3,7 +3,7 @@
 # Theodore Barnhart | tbarnhart@usgs.gov
 
 #SBATCH --job-name=mkCPG # name that you chose
-#SBATCH -n 4            # number of cores needed
+#SBATCH -n 1            # number of cores needed
 #SBATCH -p normal                         # the partition you want to use, for this case prod is best
 #SBATCH --account=wymtwsc        # your account
 #SBATCH --time=30:00:00           # Overestimated time
@@ -20,15 +20,6 @@ echo Starting $reg CPG Creation
 source activate py27 # load correct python environment
 module load gis/grass-7.4-spack # load GRASS
 
-inpath='/home/tbarnhart/projects/DEM_processing/data/cpg_datasets/' # path for source data files
-
-for inDat in `ls -1 ${inpath}*.tiff`; do # iterate through the source data files in the CPG directory, all tiffs in directory...
-    filename=$(basename -- "$inDat") # file without path
-    echo Processing: $filename
-    varName="${filename%.*}"
-    outDat=${inPath}$varName_${reg}_cpg.tiff
-    srun grass74 ./grass/reg${reg}/PERMANENT --exec sh ./make_cpg.sh ${inDat} ${reg} ${outDat} # open grass and run the program
-    echo Completed: $filename
-done
+grass74 ./grass/reg${reg}/PERMANENT --exec sh ./make_cpg.sh ${inDat} ${reg} ${outDat} # open grass and run the program
 
 echo CPGs Created for $reg
