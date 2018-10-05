@@ -5,7 +5,8 @@ inpath='/home/tbarnhart/projects/DEM_processing/data/cpg_datasets/' # path for s
 
 r.external in=/home/tbarnhart/projects/DEM_processing/data/NHDplusV21_facfdr/region_${reg}_fac.vrt out=accum --overwrite --quiet -o # link the NHDplus accumulation grid
 r.external in=/home/tbarnhart/projects/DEM_processing/data/NHDplusV21_facfdr/region_${reg}_fdr_grass.tiff out=dir --overwrite --quiet -o # link the NHDplus direction grid
-r.mapcalc "accum_fill = accum + 1" # add one to the flow accumulation grid to help w/ math down the line
+g.region rast=dir res=30 # explicitely set region to imported drainage dir extent
+r.mapcalc --overwrite "accum_fill = accum + 1" # add one to the flow accumulation grid to help w/ math down the line
 
 for inDat in `ls -1 ${inpath}*.tiff`; do # iterate through the source data files in the CPG directory, all tiffs in directory...
     filename=$(basename -- "$inDat") # file without path
@@ -14,9 +15,9 @@ for inDat in `ls -1 ${inpath}*.tiff`; do # iterate through the source data files
     outDat=${inPath}$varName_${reg}_cpg.tiff
 
     r.external in=${inDat} out=param --overwrite --quiet -o # link the parameter grid
-    r.mapcalc "param_fill = if(isnull(param),0,param)" # fill nulls to zero before accumulating the parameter surface 
+    r.mapcalc "param_fill = if(isnull(param),0,param)" --overwrite # fill nulls to zero before accumulating the parameter surface 
     r.accumulate dir=dir weight=param_fill accum=param_accum --overwrite # accumulate the parameter based on the flow direction grid
     r.mapcalc "param_cpg = float(param_accum) / float(accum_fill)" --overwrite # compute the actual CPG
-    r.out.gdal in=param_cpg out=${outDat} format=GTiff createopt="TILED=YES,COMPRESS=LZW,NUM_THREADS=ALL_CPUS,SPARSE_OK=TRUE,PROFILE=GeoTIFF" # export the CPG
+    r.out.gdal --overwrite in=param_cpg out=${outDat} format=GTiff createopt="TILED=YES,COMPRESS=LZW,NUM_THREADS=ALL_CPUS,SPARSE_OK=TRUE,PROFILE=GeoTIFF" # export the CPG
     echo Completed: $filename
 done
