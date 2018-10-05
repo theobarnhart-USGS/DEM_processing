@@ -1,6 +1,6 @@
 #!/bin/bash
 # $1 - region (int)
-$reg=$1
+reg=$1
 inpath='/home/tbarnhart/projects/DEM_processing/data/cpg_datasets/' # path for source data files
 
 r.external in=/home/tbarnhart/projects/DEM_processing/data/NHDplusV21_facfdr/region_${reg}_fac.vrt out=accum --overwrite --quiet -o # link the NHDplus accumulation grid
