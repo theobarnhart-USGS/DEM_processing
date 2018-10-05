@@ -13,9 +13,13 @@ for inDat in `ls -1 ${inpath}/*.tiff`; do # iterate through the source data file
     echo Processing: $filename
     varName="${filename%.*}"
     outDat=${inpath}/output_cpg/${varName}_${reg}_cpg.tiff
-    echo Saving to: $outDat
+    
+    # find the no data value as this doesn't transfer with r.external...
+    tmp=`gdalinfo mirad250.tiff | grep 'NoData Value='` # search gdalinfo
+    nd="$(cut -d "=" -f2 <<<$tmp)" # extract the no data value
+    
     r.external in=${inDat} out=param --overwrite --quiet -o # link the parameter grid
-    r.mapcalc "param_fill = if(isnull(param),0,param)" --overwrite # fill nulls to zero before accumulating the parameter surface 
+    r.mapcalc "param_fill = if(param==${nd},0,param)" --overwrite # fill nulls with zero before accumulating the parameter surface 
     r.accumulate dir=dir weight=param_fill accum=param_accum --overwrite --quiet # accumulate the parameter based on the flow direction grid
     r.mapcalc "param_cpg = float(param_accum) / float(accum_fill)" --overwrite # compute the actual CPG
     echo Saving to: $outDat
