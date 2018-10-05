@@ -20,6 +20,6 @@ echo Starting $reg CPG Creation
 source activate py27 # load correct python environment
 module load gis/grass-7.4-spack # load GRASS
 
-grass74 ./grass/reg${reg}/PERMANENT --exec sh ./make_cpg.sh ${inDat} ${reg} ${outDat} # open grass and run the program
+grass74 ./grass/reg${reg}/PERMANENT --exec sh ./make_cpg.sh ${reg} # open grass and run the program
 
 echo CPGs Created for $reg

@@ -1,11 +1,11 @@
 #!/bin/bash
 # $1 - region (int)
-
-r.external in=/home/tbarnhart/projects/DEM_processing/data/NHDplusV21_facfdr/region_$2_fac.vrt out=accum --overwrite --quiet -o # link the NHDplus accumulation grid
-r.external in=/home/tbarnhart/projects/DEM_processing/data/NHDplusV21_facfdr/region_$2_fdr_grass.tiff out=dir --overwrite --quiet -o # link the NHDplus direction grid
-r.mapcalc "accum_fill = accum + 1" # add one to the flow accumulation grid to help w/ math down the line
-
+$reg=$1
 inpath='/home/tbarnhart/projects/DEM_processing/data/cpg_datasets/' # path for source data files
+
+r.external in=/home/tbarnhart/projects/DEM_processing/data/NHDplusV21_facfdr/region_${reg}_fac.vrt out=accum --overwrite --quiet -o # link the NHDplus accumulation grid
+r.external in=/home/tbarnhart/projects/DEM_processing/data/NHDplusV21_facfdr/region_${reg}_fdr_grass.tiff out=dir --overwrite --quiet -o # link the NHDplus direction grid
+r.mapcalc "accum_fill = accum + 1" # add one to the flow accumulation grid to help w/ math down the line
 
 for inDat in `ls -1 ${inpath}*.tiff`; do # iterate through the source data files in the CPG directory, all tiffs in directory...
     filename=$(basename -- "$inDat") # file without path
