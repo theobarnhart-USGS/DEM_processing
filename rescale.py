@@ -9,7 +9,7 @@ import numpy as np
 
 infl = sys.argv[1] # input filename
 outfl = sys.argv[2] # output filename
-srcND = sys.argv[3] # no data value
+srcND = float(sys.argv[3]) # no data value
 scale = float(sys.argv[4])
 
 print('Reading %s'%infl)
@@ -24,8 +24,13 @@ dat[dat==srcND] = np.NaN
 print('Rescaling data by %s'%scale)
 dat = dat/scale
 
-profile.update({'dtype':'float64'})
+profile.update({'dtype':'float64',
+                'compress':'LZW',
+                'profile':'GeoTIFF',
+                'tiled':True,
+                'sparse_ok':True,
+                'num_threads':'ALL_CPUS'}) # update geotiff profile with creation options.
 
 print('Writing output to %s'%outfl)
-with rs.open(outfl, 'w', **profile, compress='LZW', profile='GeoTIFF', tiled=True, sparse_ok=True, num_threads='ALL_CPUS') as dst:
+with rs.open(outfl, 'w', **profile) as dst:
     dst.write(dat,1)
