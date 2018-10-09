@@ -10,7 +10,7 @@
 #SBATCH --mail-type=ALL         # Send email on all events
 #SBATCH --mail-user=tbarnhart@usgs.gov
 #SBATCH  -o %j.log                    # Sets output log file to %j ( will be the jobId returned by sbatch)
-#SBATCH --mem=100000
+#SBATCH --mem=125000
 
 # $1 region to process (int)
 reg=$1 # region
