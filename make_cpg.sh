@@ -16,7 +16,7 @@ for inDat in `ls -1 ${inpath}/*.tiff`; do # iterate through the source data file
     outDat=${inpath}/output_cpg/${varName}_${reg}_cpg.tiff
     
     # find the no data value as this doesn't transfer with r.external...
-    tmp=`gdalinfo mirad250.tiff | grep 'NoData Value='` # search gdalinfo
+    tmp=`gdalinfo $inDat | grep 'NoData Value='` # search gdalinfo
     nd="$(cut -d "=" -f2 <<<$tmp)" # extract the no data value
     
     r.external in=${inDat} out=param --overwrite --quiet -o # link the parameter grid
