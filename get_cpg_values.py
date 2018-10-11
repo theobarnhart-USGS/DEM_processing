@@ -6,10 +6,6 @@ import gdal
 
 reg = sys.argv[1] # pull the region from the command line arguments
 
-# grass functions
-r_external = Module('r.external')
-r_what = Module('r.what')
-
 def get_val(dat,gt=[],rb=[]):
     ''' Grab cell value based on data frame x and y variables.
     dat = dataframe containing x and y 
@@ -40,4 +36,7 @@ for fl in cpgs: # iterate through each CPG
     dat[CPG] = dat.apply(get_val,gt=gt,rb=rb,axis=1) # query the maps
     print('Completed %s'%CPG)
 
-dat.to_csv('./data/CATCHMENT_cpgDat_reg_%s.csv'%(reg),index=False,header=True,index_label=False)
+outfl = './data/CATCHMENT_cpgDat_reg_%s.csv'%(reg)
+print('Writing output to: %s'%(outfl))
+dat.to_csv(outfl,index=False,header=True,index_label=False)
+print('Done!')
