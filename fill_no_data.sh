@@ -3,10 +3,10 @@
 # Theodore Barnhart | tbarnhart@usgs.gov
 
 #SBATCH --job-name=mkCPG # name that you chose
-#SBATCH -n 8            # number of cores needed
+#SBATCH -n 16            # number of cores needed
 #SBATCH -p normal                         # the partition you want to use, for this case prod is best
 #SBATCH --account=wymtwsc        # your account
-#SBATCH --time=12:00:00           # Overestimated time
+#SBATCH --time=24:00:00           # Overestimated time
 #SBATCH --mail-type=ALL         # Send email on all events
 #SBATCH --mail-user=tbarnhart@usgs.gov
 #SBATCH  -o %j.log                    # Sets output log file to %j ( will be the jobId returned by sbatch)
