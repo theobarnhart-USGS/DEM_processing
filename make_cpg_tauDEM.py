@@ -6,6 +6,7 @@ import sys
 import glob
 import rasterio as rs
 import os
+import shutil
 
 reg = sys.argv[1] # pull the region
 jobID = sys.argv[2] # pull the slurm job ID
@@ -204,3 +205,6 @@ for param,dataPath,noDataPath in zip(params.name, params.accumData, params.accum
         make_cpg(param,dataPath,noDataPath)
     except:
         print('Error Computing CPGS for %s'%(param))
+
+# delete the temp dir
+shutil.rmtree(tempDir)
