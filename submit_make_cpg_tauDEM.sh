@@ -1,6 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=aggNLDAS # name that you chose
-#SBATCH -N 33            # number of cores needed
+#SBATCH --job-name=CPG # name that you chose
+#SBATCH --nodes=1            # number of nodes
+#SBATCH --ntasks-per-node=16
 #SBATCH -p normal                         # the partition you want to use, for this case prod is best
 #SBATCH --account=wymtwsc        # your account
 #SBATCH --time=36:00:00           # Overestimated guess at time
