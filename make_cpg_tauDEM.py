@@ -207,4 +207,4 @@ for param,dataPath,noDataPath in zip(params.name, params.accumData, params.accum
         print('Error Computing CPGS for %s'%(param))
 
 # delete the temp dir
-shutil.rmtree(tempDir)
+#shutil.rmtree(tempDir)
