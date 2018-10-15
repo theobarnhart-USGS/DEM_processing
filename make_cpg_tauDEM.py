@@ -170,42 +170,42 @@ outPathsData = []
 outPathsNoData = []
 for param,dataPath,noDataPath in zip(params.name, params.dataPath, params.noDataPath): 
     # first accumulate the parameter
-    try:
-        print('Accumulating Data %'%param)
-        tauParams['outFl'] = os.path.join(tempDir,param+'_fill_accum.tiff')
-        tauParams['weight'] = dataPath
-        
-        cmd = 'mpiexec -n {cores} AreaD8 -p {fdr} -ad8 {outFl} -wg {weight}'.format(**tauParams)
-        subprocess.call(cmd, shell = True)
-        outPathsData.append(tauParams['outFl']) # save accumualted data path
-    except:
-        print('Error Accumulating Data')
-        outPathsData.append(None)
+    #try:
+    print('Accumulating Data %'%param)
+    tauParams['outFl'] = os.path.join(tempDir,param+'_fill_accum.tiff')
+    tauParams['weight'] = dataPath
+    
+    cmd = 'mpiexec -n {cores} AreaD8 -p {fdr} -ad8 {outFl} -wg {weight}'.format(**tauParams)
+    subprocess.call(cmd, shell = True)
+    outPathsData.append(tauParams['outFl']) # save accumualted data path
+    #except:
+    #    print('Error Accumulating Data')
+    #    outPathsData.append(None)
 
     # now accumulate the no data values
-    try:
-        print('Accumulating NoData %'%param)
-        # then accumualte the noData binary grid
-        tauParams['outFl'] = os.path.join(tempDir,param+'_noData_accum.tiff')
-        tauParams['weight'] = noDataPath
+    #try:
+    print('Accumulating NoData %'%param)
+    # then accumualte the noData binary grid
+    tauParams['outFl'] = os.path.join(tempDir,param+'_noData_accum.tiff')
+    tauParams['weight'] = noDataPath
 
-        md = 'mpiexec -n {cores} AreaD8 -p {fdr} -ad8 {outFl} -wg {weight}'.format(**tauParams)
-        subprocess.call(cmd, shell = True)
-        outPathsNoData.append(tauParams['outFl']) # save accumulated no data path
-    except:
-        print('Error Accumulating NoData')
-        outPathsNoData.append(None)
+    md = 'mpiexec -n {cores} AreaD8 -p {fdr} -ad8 {outFl} -wg {weight}'.format(**tauParams)
+    subprocess.call(cmd, shell = True)
+    outPathsNoData.append(tauParams['outFl']) # save accumulated no data path
+    #except:
+    #    print('Error Accumulating NoData')
+    #    outPathsNoData.append(None)
 
 # save the output paths
 params['accumData'] = outPathsData
 params['accumNoData'] = outPathsNoData
 
 for param,dataPath,noDataPath in zip(params.name, params.accumData, params.accumNoData):
-    try:
-        print('Computing CPGS for %s'%(param))
-        make_cpg(param,dataPath,noDataPath)
-    except:
-        print('Error Computing CPGS for %s'%(param))
+    #try:
+    print('Computing CPGS for %s'%(param))
+    make_cpg(param,dataPath,noDataPath)
+    #except:
+    #    print('Error Computing CPGS for %s'%(param))
 
 # delete the temp dir
 #shutil.rmtree(tempDir)
