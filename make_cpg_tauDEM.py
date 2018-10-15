@@ -10,7 +10,7 @@ import shutil
 
 reg = sys.argv[1] # pull the region
 jobID = sys.argv[2] # pull the slurm job ID
-cores = sys.argv[3] - 1 # pull the number of cores available
+cores = int(sys.argv[3]) - 1 # pull the number of cores available
 
 fdrPath = './data/NHDplusV21_facfdr/region_%s_fdr_tau.tiff'%(reg) # path to the flow direction raster
 facPath = './data/NHDplusV21_facfdr/region_%s_fac.vrt'%(reg)
@@ -55,8 +55,8 @@ def make_cpg(param,dataPath,noDataPath,tempDir=tempDir,facPath=facPath,outDir = 
                 'tiled':True,
                 'sparse_ok':True,
                 'num_threads':'ALL_CPUS',
-                'nodata':-9999},
-                'count':2)
+                'nodata':-9999,
+                'count':2})
 
     with rs.open(CPGpath, 'w', **profile) as dst:
         dst.write(dataCPG,1)
@@ -117,7 +117,7 @@ for param,path in zip(params.name,params.path): # crop input datasets to common 
         cropParams['inFl'] = path
         cropParams['outFl'] = os.path.join(tempDir,param+'_zeroFill.tiff') # create temp output file
         print('Cropping %s to temporary directory.'%(param))
-        cmd = 'gdalwarp -tap -tr 30 30 -te {xmin} {ymin} {xmax} {ymax} {inFl} {outFl}'.format(**cropParams)
+        cmd = 'gdalwarp -wo NUM_THREADS=ALL_CPUS -multi -tap -tr 30 30 -te {xmin} {ymin} {xmax} {ymax} {inFl} {outFl}'.format(**cropParams)
         subprocess.call(cmd, shell = True)
         outPaths.append(cropParams['outFl']) # save the output path
     except:
@@ -127,20 +127,21 @@ for param,path in zip(params.name,params.path): # crop input datasets to common 
 params['dataPath'] = outPaths # update output paths into the dataframe
 
 outPaths = []
-for param,path in zip(params.name,params.tempPath): # fill each temp file with ones
+for param,path in zip(params.name,params.dataPath): # fill each temp file with ones
     try:
         print('Generating NoData binary raster for %s'%(param))
         outFl = os.path.join(tempDir,param+'_noData.tiff')
         with rs.open(path) as ds: # read data
             dat = ds.read(1)
             profile = ds.profile
+            noData = ds.nodata
 
         dat[dat!=noData] = 0 # make data values zero
         dat[dat==noData] = 1 # make noData values 1 to be accumulated later
         dat.dtype = np.uint8 # byte data type
         
         # update geoTiff profile
-        profile.update({'dtype':'byte',
+        profile.update({'dtype':dat.dtype,
                 'compress':'LZW',
                 'profile':'GeoTIFF',
                 'tiled':True,
