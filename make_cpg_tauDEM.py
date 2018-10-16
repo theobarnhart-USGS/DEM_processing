@@ -15,7 +15,8 @@ cores = int(sys.argv[3]) - 1 # pull the number of cores available
 fdrPath = './data/NHDplusV21_facfdr/region_%s_fdr_tau.tiff'%(reg) # path to the flow direction raster
 facPath = './data/NHDplusV21_facfdr/region_%s_fac.vrt'%(reg)
 tempDir = './data/temps/%s'%(jobID)
-outDir = './data/cpg_datasets/output_cpgs'
+outDir = './data/cpg_datasets/output_cpg'
+paramPath ='./data/cpg_datasets/filled_data'
 
 def make_cpg(param,dataPath,noDataPath,tempDir=tempDir,facPath=facPath,outDir = outDir, reg = reg):
     '''
@@ -33,14 +34,14 @@ def make_cpg(param,dataPath,noDataPath,tempDir=tempDir,facPath=facPath,outDir = 
     '''
     CPGpath = os.path.join(outDir,param+'_%s_cpg.tiff'%(reg))
 
-    with rs.open(dataPath) as ds: # load data raster and find no data value
+    with rs.open(dataPath) as ds: # load accumulated data and no data rasters
         data = ds.read(1)
         profile = ds.profile
 
     with rs.open(noDataPath) as ds:
         noData = ds.read(1)
 
-    with rs.open(facPath) as ds:
+    with rs.open(facPath) as ds: # flow accumulation raster
         accum = ds.read(1)
 
     dataCPG = data / ((accum + 1.) - noData) # make data CPG
@@ -67,8 +68,15 @@ def make_cpg(param,dataPath,noDataPath,tempDir=tempDir,facPath=facPath,outDir = 
 # create temp directory
 os.mkdir(tempDir)
 
+# check that all the input and outputs exist
+assert os.path.isfile(fdrPath) == True
+assert os.path.isfile(facPath) == True
+assert os.path.isdir(tempDir) == True
+assert os.path.isdir(outDir) == True
+assert os.path.isdir(paramPath) == True
+
 params = pd.DataFrame()
-params['path'] = glob.glob('./data/cpg_datasets/filled_data/*.tiff') #list the zero-filled datasets
+params['path'] = glob.glob(os.path.join(paramPath,'*.tiff')) #list the zero-filled datasets
 
 def get_param_name(path):
     return path.split('_noDat')[-2].split('/')[-1]
