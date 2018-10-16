@@ -12,5 +12,6 @@
 
 source activate py36
 module load gis/TauDEM-5.3.8-gcc-mpich
+module load gdal/2.2.2-gcc
 
 python -u ./make_cpg_tauDEM.py $1 $SLURM_JOB_ID $SLURM_NTASKS
