@@ -49,7 +49,7 @@ def make_cpg(param,dataPath,noDataPath,tempDir=tempDir,facPath=facPath,outDir = 
     dataCPG.dtype = np.float32
     noDataCPG.dtype = np.float32
 
-    profile.update({'dtype':'float32',
+    profile.update({'dtype':dataCPG.dtype,
                 'compress':'LZW',
                 'profile':'GeoTIFF',
                 'tiled':True,
@@ -116,8 +116,9 @@ for param,path in zip(params.name,params.path): # crop input datasets to common 
         # update input and output files:
         cropParams['inFl'] = path
         cropParams['outFl'] = os.path.join(tempDir,param+'_zeroFill.tiff') # create temp output file
+
         print('Cropping %s to temporary directory.'%(param))
-        cmd = 'gdalwarp -wo NUM_THREADS=ALL_CPUS -multi -tap -tr 30 30 -te {xmin} {ymin} {xmax} {ymax} {inFl} {outFl}'.format(**cropParams)
+        cmd = 'gdalwarp -wo NUM_THREADS=ALL_CPUS -multi -tr 30 30 -te {xmin} {ymin} {xmax} {ymax} {inFl} {outFl}'.format(**cropParams)
         subprocess.call(cmd, shell = True)
         outPaths.append(cropParams['outFl']) # save the output path
     except:
@@ -171,11 +172,11 @@ outPathsNoData = []
 for param,dataPath,noDataPath in zip(params.name, params.dataPath, params.noDataPath): 
     # first accumulate the parameter
     #try:
-    print('Accumulating Data %'%param)
+    print('Accumulating Data %s'%param)
     tauParams['outFl'] = os.path.join(tempDir,param+'_fill_accum.tiff')
     tauParams['weight'] = dataPath
     
-    cmd = 'mpiexec -n {cores} AreaD8 -p {fdr} -ad8 {outFl} -wg {weight}'.format(**tauParams)
+    cmd = 'mpiexec -n {cores} aread8 -p {fdr} -ad8 {outFl} -wg {weight}'.format(**tauParams)
     subprocess.call(cmd, shell = True)
     outPathsData.append(tauParams['outFl']) # save accumualted data path
     #except:
@@ -184,12 +185,13 @@ for param,dataPath,noDataPath in zip(params.name, params.dataPath, params.noData
 
     # now accumulate the no data values
     #try:
-    print('Accumulating NoData %'%param)
+    print('Accumulating NoData %s'%param)
     # then accumualte the noData binary grid
     tauParams['outFl'] = os.path.join(tempDir,param+'_noData_accum.tiff')
     tauParams['weight'] = noDataPath
 
-    md = 'mpiexec -n {cores} AreaD8 -p {fdr} -ad8 {outFl} -wg {weight}'.format(**tauParams)
+    cmd = 'mpiexec -n {cores} aread8 -p {fdr} -ad8 {outFl} -wg {weight}'.format(**tauParams)
+    print(cmd)
     subprocess.call(cmd, shell = True)
     outPathsNoData.append(tauParams['outFl']) # save accumulated no data path
     #except:
