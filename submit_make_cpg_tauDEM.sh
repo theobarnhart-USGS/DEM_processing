@@ -2,7 +2,6 @@
 #SBATCH --job-name=CPG # name that you chose
 #SBATCH -c 1 # cpus per task
 #SBATCH -n 21 # number of tasks
-#SBATCH --ntasks-per-node=16
 #SBATCH -p normal                         # the partition you want to use, for this case prod is best
 #SBATCH --account=wymtwsc        # your account
 #SBATCH --time=08:00:00           # Overestimated guess at time
