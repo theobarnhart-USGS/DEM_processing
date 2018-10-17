@@ -46,6 +46,7 @@ def make_cpg(param,dataPath,noDataPath,tempDir=tempDir,facPath=facPath,outDir = 
     Outputs:
         Parameter and NoData CPGS as bands 1 and 2 of a file in the output directory.
     '''
+    outNoData = -9999
     CPGpath = os.path.join(outDir,param+'_%s_cpg.tiff'%(reg))
 
     with rs.open(dataPath) as ds: # load accumulated data and no data rasters
@@ -57,12 +58,21 @@ def make_cpg(param,dataPath,noDataPath,tempDir=tempDir,facPath=facPath,outDir = 
 
     with rs.open(facPath) as ds: # flow accumulation raster
         accum = ds.read(1)
+        accumNoData = ds.nodata # pull the accumulated area no data value
+
+
+    accum[accum == accumNoData] = np.NaN # fill this with no data values where appropriate
 
     dataCPG = data / ((accum + 1.) - noData) # make data CPG
     noDataCPG = noData / (accum + 1.) # make noData CPG
 
+    # control the data type
     dataCPG.dtype = np.float32
     noDataCPG.dtype = np.float32
+
+    # fill edges with no data
+    dataCPG[np.isnan(accum)] = outNoData
+    noDataCPG[np.isnan(accum)] = outNoData
 
     profile.update({'dtype':dataCPG.dtype,
                 'compress':'LZW',
@@ -70,7 +80,7 @@ def make_cpg(param,dataPath,noDataPath,tempDir=tempDir,facPath=facPath,outDir = 
                 'tiled':True,
                 'sparse_ok':True,
                 'num_threads':'ALL_CPUS',
-                'nodata':-9999,
+                'nodata':outNoData,
                 'count':2})
 
     with rs.open(CPGpath, 'w', **profile) as dst:
