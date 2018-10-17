@@ -100,7 +100,7 @@ assert os.path.isdir(outDir) == True
 assert os.path.isdir(paramPath) == True
 
 params = pd.DataFrame()
-params['path'] = glob.glob(os.path.join(paramPath,'*.tiff')) #list the zero-filled datasets
+params['path'] = glob.glob(os.path.join(paramPath,'*.tiff'))[0] #list the zero-filled datasets
 
 def get_param_name(path):
     return path.split('_noDat')[-2].split('/')[-1]
