@@ -101,48 +101,44 @@ def fill_noData(df,append=[],fillVal=[],tempDir=tempDir):
     Outputs:
         fillPath - path to the filled raster
     '''
-    try:
-        param = df.name
-        path = df.sourcePath
-        fillPath = os.path.join(tempDir,param+'_%s.tiff'%(append))
+    #try:
+    param = df['name']
+    path = df.sourcePath
+    fillPath = os.path.join(tempDir,param+'_%s.tiff'%(append))
 
-        noData = 0
+    noDataOut = 0
 
-        with rs.open(path) as ds: # read data
-            dat = ds.read(1)
-            profile = ds.profile
-            noData = ds.nodata
+    with rs.open(path) as ds: # read data
+        dat = ds.read(1)
+        profile = ds.profile
+        noData = ds.nodata
 
-        if fillVal == 1:
-            dat[dat!=noData] = 0 # make data values zero
-            dat[dat==noData] = 1 # make noData values 1 to be accumulated later
-            dat.dtype = np.uint8 # byte data type
-            noData = 1
-        
-        elif fillVal == 0:
-            dat[dat==noData] = 0 # make noData values zero
-            noData = 0
+    if fillVal == 1:
+        dat[dat!=noData] = 0 # make data values zero
+        dat[dat==noData] = 1 # make noData values 1 to be accumulated later
+        dat.dtype = np.uint8 # byte data type
+        noDataOut = 1
+    
+    elif fillVal == 0:
+        dat[dat==noData] = 0 # make noData values zero
+        noDataOut = 0
 
-        else:
-            print('Fill Value Conditions Not Met.')
-            continue
+    # update geoTiff profile
+    profile.update({'dtype':dat.dtype,
+                    'compress':'LZW',
+                    'profile':'GeoTIFF',
+                    'tiled':True,
+                    'sparse_ok':True,
+                    'num_threads':'ALL_CPUS',
+                    'nodata':noDataOut})
 
-        # update geoTiff profile
-        profile.update({'dtype':dat.dtype,
-                        'compress':'LZW',
-                        'profile':'GeoTIFF',
-                        'tiled':True,
-                        'sparse_ok':True,
-                        'num_threads':'ALL_CPUS',
-                        'nodata':noData})
+    with rs.open(fillPath, 'w', **profile) as dst: # write out the dataset
+        dst.write(dat,1)
 
-        with rs.open(outFl, 'w', **profile) as dst: # write out the dataset
-            dst.write(dat,1)
-
-        return fillPath
-    except:
-        print('Error Filling.')
-        return None
+    return fillPath
+    #except:
+    #    print('Error Filling.')
+    #    return None
 
 # create temp directory
 os.mkdir(tempDir)
@@ -155,10 +151,12 @@ assert os.path.isdir(outDir) == True
 assert os.path.isdir(paramPath) == True
 
 params = pd.DataFrame()
-params['path'] = glob.glob(os.path.join(paramPath,'*.tiff'))[0] #list the zero-filled datasets
+params['path'] = glob.glob(os.path.join(paramPath,'*.tiff'))[0:2] #list the source datasets
 
 def get_param_name(path):
-    return path.split('.tiff')[0].split('/')[-1]
+    name = path.split('.tiff')[0].split('/')[-1]
+    print(name)
+    return name
 
 params['name'] = params.path.map(get_param_name) # extract parameter names
 
@@ -214,14 +212,11 @@ for param,path in zip(params.name,params.path): # crop input datasets to common 
 
 params['sourcePath'] = outPaths # update output paths into the dataframe
 
-outPathsData = []
-outPathsNoDAta = []
-
 # generate no data rasters with no-data filled to 1
 params['noDataPath'] = params.apply(fill_noData,axis = 1, append = 'noData', fillVal = 1)
 
 # generate data rasters with no-data filled to 0
-params['dataPath'] = params.apply(fill_noData,axis = 0, append = 'zeroFill', fillVal = 1)
+params['dataPath'] = params.apply(fill_noData,axis = 1, append = 'zeroFill', fillVal = 0)
 
 # TauDEM code
 tauParams = {
