@@ -16,7 +16,7 @@ fdrPath = './data/NHDplusV21_facfdr/region_%s_fdr_tau.tiff'%(reg) # path to the 
 facPath = './data/NHDplusV21_facfdr/region_%s_fac.vrt'%(reg)
 tempDir = './data/temps/%s'%(jobID)
 outDir = './data/cpg_datasets/output_cpg'
-paramPath ='./data/cpg_datasets/filled_data'
+paramPath ='./data/cpg_datasets/' # load all tiff files from this path
 
 #gdalDataTypes = {
 #    'ditches92':'Byte', # percent
@@ -63,7 +63,7 @@ def make_cpg(param,dataPath,noDataPath,tempDir=tempDir,facPath=facPath,outDir = 
 
     accum[accum == accumNoData] = np.NaN # fill this with no data values where appropriate
 
-    dataCPG = data / ((accum + 1.) - noData) # make data CPG
+    dataCPG = data / ((accum + 1.) - (noData + 1.)) # make data CPG
     noDataCPG = noData / (accum + 1.) # make noData CPG
 
     # control the data type
@@ -89,6 +89,61 @@ def make_cpg(param,dataPath,noDataPath,tempDir=tempDir,facPath=facPath,outDir = 
 
     return None
 
+def fill_noData(df,append=[],fillVal=[],tempDir=tempDir):
+    '''
+    Inputs:
+        df - data frame with paths to data rasters (string) and parameter names:
+            df.name - assumed name of parameter names
+            df.sourcePath - assumed name of data raster path
+        append - string to append to the parameter name
+        fillVal - value to fill raster NoData values with, zero or 1 (int)
+        tempDir - temporary directory, defined above.
+    Outputs:
+        fillPath - path to the filled raster
+    '''
+    try:
+        param = df.name
+        path = df.sourcePath
+        fillPath = os.path.join(tempDir,param+'_%s.tiff'%(append))
+
+        noData = 0
+
+        with rs.open(path) as ds: # read data
+            dat = ds.read(1)
+            profile = ds.profile
+            noData = ds.nodata
+
+        if fillVal == 1:
+            dat[dat!=noData] = 0 # make data values zero
+            dat[dat==noData] = 1 # make noData values 1 to be accumulated later
+            dat.dtype = np.uint8 # byte data type
+            noData = 1
+        
+        elif fillVal == 0:
+            dat[dat==noData] = 0 # make noData values zero
+            noData = 0
+
+        else:
+            print('Fill Value Conditions Not Met.')
+            continue
+
+        # update geoTiff profile
+        profile.update({'dtype':dat.dtype,
+                        'compress':'LZW',
+                        'profile':'GeoTIFF',
+                        'tiled':True,
+                        'sparse_ok':True,
+                        'num_threads':'ALL_CPUS',
+                        'nodata':noData})
+
+        with rs.open(outFl, 'w', **profile) as dst: # write out the dataset
+            dst.write(dat,1)
+
+        return fillPath
+    except:
+        print('Error Filling.')
+        return None
+
 # create temp directory
 os.mkdir(tempDir)
 
@@ -103,7 +158,7 @@ params = pd.DataFrame()
 params['path'] = glob.glob(os.path.join(paramPath,'*.tiff'))[0] #list the zero-filled datasets
 
 def get_param_name(path):
-    return path.split('_noDat')[-2].split('/')[-1]
+    return path.split('.tiff')[0].split('/')[-1]
 
 params['name'] = params.path.map(get_param_name) # extract parameter names
 
@@ -147,50 +202,26 @@ for param,path in zip(params.name,params.path): # crop input datasets to common 
     try:
         # update input and output files:
         cropParams['inFl'] = path
-        cropParams['outFl'] = os.path.join(tempDir,param+'_zeroFill.tiff') # create temp output file
+        cropParams['outFl'] = os.path.join(tempDir,param+'.tiff') # create temp output file
 
         print('Cropping %s to temporary directory.'%(param))
-        cmd = 'gdalwarp -wo NUM_THREADS=ALL_CPUS -multi -tr 30 30 -te {xmin} {ymin} {xmax} {ymax} {inFl} {outFl}'.format(**cropParams)
+        cmd = 'gdalwarp -wo NUM_THREADS=ALL_CPUS -co TILED=YES -co COMPRESS=LZW -co NUM_THREADS=ALL_CPUS -co SPARSE_OK=TRUE -co PROFILE=GeoTIFF -multi -tr 30 30 -te {xmin} {ymin} {xmax} {ymax} {inFl} {outFl}'.format(**cropParams)
         subprocess.call(cmd, shell = True)
         outPaths.append(cropParams['outFl']) # save the output path
     except:
         print('Error cropping %.'%(param))
         outPaths.append(None)
 
-params['dataPath'] = outPaths # update output paths into the dataframe
+params['sourcePath'] = outPaths # update output paths into the dataframe
 
-outPaths = []
-for param,path in zip(params.name,params.dataPath): # fill each temp file with ones
-    try:
-        print('Generating NoData binary raster for %s'%(param))
-        outFl = os.path.join(tempDir,param+'_noData.tiff')
-        with rs.open(path) as ds: # read data
-            dat = ds.read(1)
-            profile = ds.profile
-            noData = ds.nodata
+outPathsData = []
+outPathsNoDAta = []
 
-        dat[dat!=noData] = 0 # make data values zero
-        dat[dat==noData] = 1 # make noData values 1 to be accumulated later
-        dat.dtype = np.uint8 # byte data type
-        
-        # update geoTiff profile
-        profile.update({'dtype':dat.dtype,
-                'compress':'LZW',
-                'profile':'GeoTIFF',
-                'tiled':True,
-                'sparse_ok':True,
-                'num_threads':'ALL_CPUS',
-                'nodata':255})
+# generate no data rasters with no-data filled to 1
+params['noDataPath'] = params.apply(fill_noData,axis = 1, append = 'noData', fillVal = 1)
 
-        with rs.open(outFl, 'w', **profile) as dst:
-            dst.write(dat,1)
-
-        outPaths.append(outFl)
-    except:
-        print('Error in binary raster creation.')
-        outPaths.append(None)
-
-params['noDataPath'] = outPaths # save noData binary raster paths to dataframe.
+# generate data rasters with no-data filled to 0
+params['dataPath'] = params.apply(fill_noData,axis = 0, append = 'zeroFill', fillVal = 1)
 
 # TauDEM code
 tauParams = {
